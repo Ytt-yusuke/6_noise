@@ -1,18 +1,18 @@
-﻿Shader "Unlit/ObjShader"
+﻿Shader "Unlit/otherShader"
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
-        _NormalMap ("Normal map", 2D) = "bump" {}
-        _AOMap ("AO map", 2D) = "bump" {}
-        _RoughnessMap ("Roughness map", 2D) = "bump" {}
-        _NoiseTex ("Noise Texture", 2D) = "white" {}
+        _MainTex("Texture", 2D) = "white" {}
+        _NormalMap("Normal map", 2D) = "bump" {}
+        _AOMap("AO map", 2D) = "bump" {}
+        _RoughnessMap("Roughness map", 2D) = "bump" {}
+        _NoiseTex("NoiseTexture", 2D) = "white" {}
         _Threshold("Threshold", Range(-1.0, 1.0)) = -1.0
-        _GradetionTex("Gradetion Texture", 2D) = "white" {}
+  
     }
-    SubShader
+        SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType" = "Opaque" }
         LOD 100
 
         Pass
@@ -49,10 +49,9 @@
             sampler2D _AOMap;
             sampler2D _RoughnessMap;
             sampler2D _NoiseTex;
-            sampler2D _GradetionTex;
             float _Threshold;
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -69,11 +68,13 @@
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
                 // sample the texture
 
+                float fbm = tex2D(_NoiseTex, i.uv) + _Threshold;
                 half3 tnormal = UnpackNormal(tex2D(_NormalMap, i.uv));
+                tnormal *= fbm;
                 half3 worldNormal;
                 worldNormal.x = dot(i.tspace0, tnormal);
                 worldNormal.y = dot(i.tspace1, tnormal);
@@ -83,17 +84,10 @@
                 float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
                 float luminance = saturate(dot(worldNormal, lightDir));
                 fixed4 decal = tex2D(_MainTex, i.uv);
-                fixed AO = tex2D(_AOMap, i.uv).x;
-                fixed roughness = tex2D(_RoughnessMap, i.uv).x;
+                fixed AO = tex2D(_AOMap, i.uv).x * 0.75;
+                fixed roughness = tex2D(_RoughnessMap, i.uv).x * 0.75;
                 // 適当に物体の表面の色を付ける
                 fixed4 col = decal * AO * (luminance * roughness * 3.0 + 0.5);
-
-                // ノイズを使って、ディゾルブしよう
-                float fbm = tex2D(_NoiseTex, i.uv) + _Threshold;
-                //fbm += frac(_Time.x) * 2.0 - 1.0;
-                if (1.0 < fbm) discard;
-                float4 gradetion = tex2D(_GradetionTex, float2(fbm, 0));
-                col = lerp(col, gradetion, max(0.0, fbm));
 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);

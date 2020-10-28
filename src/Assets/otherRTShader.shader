@@ -1,4 +1,4 @@
-﻿Shader "Unlit/RTShader"
+﻿Shader "Unlit/otherRTShader"
 {
     Properties
     {
@@ -33,7 +33,7 @@
                 float v10 = random2(p + fixed2(1, 0));
                 float v01 = random2(p + fixed2(0, 1));
                 float v11 = random2(p + fixed2(1, 1));
-                
+
                 return lerp(lerp(dot(v00, f - float2(0, 0)),
                                  dot(v10, f - float2(1, 0)), u.x),
                             lerp(dot(v01, f - float2(0, 1)),
@@ -43,9 +43,9 @@
 
             float4 frag(v2f_customrendertexture IN) : COLOR
             {
-                float noise = 
-                    Noise(IN.globalTexcoord * 4  + _Time.y * 0.01) +
-                    Noise(IN.globalTexcoord * 8  + _Time.y * 0.04) * 0.5 +
+                float noise =
+                    Noise(IN.globalTexcoord * 4 + _Time.y * 0.01) +
+                    Noise(IN.globalTexcoord * 8 + _Time.y * 0.04) * 0.5 +
                     Noise(IN.globalTexcoord * 16 + _Time.y * 0.16) * 0.25 +
                     Noise(IN.globalTexcoord * 32 + _Time.y * 0.64) * 0.125;
 
